@@ -1,0 +1,86 @@
+# Copy only this configuration's generated exports. install(EXPORT)'s normal
+# replacement logic can delete exports belonging to other configurations.
+string(TOLOWER "${CMAKE_INSTALL_CONFIG_NAME}" _iko_config)
+file(GLOB _iko_exports "@CMAKE_CURRENT_BINARY_DIR@/CMakeFiles/Export/*/iko-tessellation-targets.cmake")
+list(LENGTH _iko_exports _iko_export_count)
+if(NOT _iko_export_count EQUAL 1)
+  message(FATAL_ERROR "Cannot identify the tessellation installation export")
+endif()
+list(GET _iko_exports 0 _iko_export)
+get_filename_component(_iko_export_dir "${_iko_export}" DIRECTORY)
+file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/iko_tessellation" TYPE FILE
+  FILES "${_iko_export}" "${_iko_export_dir}/iko-tessellation-targets-${_iko_config}.cmake")
+
+# Keep one ordinary file list per module/configuration. Read it as data, never
+# execute it. Unrecorded files and records owned by other modules stay intact.
+set(_iko_root "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
+get_filename_component(_iko_root "${_iko_root}" ABSOLUTE)
+set(_iko_record "${_iko_root}/lib/cmake/iko_tessellation/install-manifest-${_iko_config}.txt")
+set(_iko_current)
+list(LENGTH CMAKE_INSTALL_MANIFEST_FILES _iko_manifest_end)
+if(_iko_manifest_end GREATER _iko_tessellation_manifest_start)
+  math(EXPR _iko_manifest_count "${_iko_manifest_end} - ${_iko_tessellation_manifest_start}")
+  list(SUBLIST CMAKE_INSTALL_MANIFEST_FILES ${_iko_tessellation_manifest_start}
+    ${_iko_manifest_count} _iko_installed)
+  foreach(_iko_file IN LISTS _iko_installed)
+    file(RELATIVE_PATH _iko_relative "${CMAKE_INSTALL_PREFIX}" "${_iko_file}")
+    list(APPEND _iko_current "${_iko_relative}")
+  endforeach()
+endif()
+list(REMOVE_DUPLICATES _iko_current)
+
+set(_iko_previous)
+if(EXISTS "${_iko_record}")
+  file(STRINGS "${_iko_record}" _iko_previous)
+endif()
+file(GLOB _iko_other_records "${_iko_root}/lib/cmake/iko_*/install-manifest-*.txt")
+list(REMOVE_ITEM _iko_other_records "${_iko_record}")
+set(_iko_still_used)
+foreach(_iko_other_record IN LISTS _iko_other_records)
+  file(STRINGS "${_iko_other_record}" _iko_other_files)
+  list(APPEND _iko_still_used ${_iko_other_files})
+endforeach()
+
+foreach(_iko_old_file IN LISTS _iko_previous)
+  if(_iko_old_file IN_LIST _iko_current OR _iko_old_file IN_LIST _iko_still_used)
+    continue()
+  endif()
+  if(_iko_old_file MATCHES "^lib/cmake/iko_tessellation/install-manifest-")
+    continue()
+  endif()
+  if(_iko_old_file MATCHES "^lib/cmake/iko_tessellation/iko-tessellation-targets-([^/]+)\\.cmake$")
+    if(NOT CMAKE_MATCH_1 STREQUAL _iko_config)
+      continue()
+    endif()
+  endif()
+  # The shared entry point is retained even after the last module is removed.
+  # Legacy shared dependency files cannot be assigned to one module safely.
+  if(NOT (_iko_old_file MATCHES "^@CMAKE_INSTALL_INCLUDEDIR@/tessellation/" OR
+      _iko_old_file MATCHES "^lib/cmake/iko_tessellation/" OR
+      _iko_old_file MATCHES "^@CMAKE_INSTALL_DATADIR@/iko/tessellation/" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_LIBDIR@/${_iko_config}/$<TARGET_LINKER_FILE_NAME:iko_tessellation>" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_BINDIR@/${_iko_config}/$<TARGET_FILE_NAME:iko_tessellation>" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_BINDIR@/${_iko_config}/tessellate@CMAKE_EXECUTABLE_SUFFIX@" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_LIBDIR@/$<TARGET_LINKER_FILE_NAME:iko_tessellation>" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_BINDIR@/$<TARGET_FILE_NAME:iko_tessellation>" OR
+      _iko_old_file STREQUAL "@CMAKE_INSTALL_BINDIR@/tessellate@CMAKE_EXECUTABLE_SUFFIX@"))
+    continue()
+  endif()
+  get_filename_component(_iko_old_path "${_iko_root}/${_iko_old_file}" ABSOLUTE)
+  file(RELATIVE_PATH _iko_checked "${_iko_root}" "${_iko_old_path}")
+  if(IS_ABSOLUTE "${_iko_checked}" OR _iko_checked MATCHES "^\.\.(/|$)")
+    message(FATAL_ERROR "An installation record escaped the iko installation root")
+  endif()
+  if(EXISTS "${_iko_old_path}" AND NOT IS_DIRECTORY "${_iko_old_path}" AND NOT IS_SYMLINK "${_iko_old_path}")
+    file(REAL_PATH "${_iko_old_path}" _iko_real_file)
+    file(REAL_PATH "${_iko_root}" _iko_real_root)
+    file(RELATIVE_PATH _iko_real_relative "${_iko_real_root}" "${_iko_real_file}")
+    if(IS_ABSOLUTE "${_iko_real_relative}" OR _iko_real_relative MATCHES "^\.\.(/|$)")
+      message(FATAL_ERROR "An installed file resolves outside the iko installation root")
+    endif()
+    file(REMOVE "${_iko_old_path}")
+    message(STATUS "Removed obsolete tessellation ${CMAKE_INSTALL_CONFIG_NAME} file: ${_iko_checked}")
+  endif()
+endforeach()
+string(REPLACE ";" "\n" _iko_record_text "${_iko_current}")
+file(WRITE "${_iko_record}" "${_iko_record_text}\n")

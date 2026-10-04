@@ -1,0 +1,92 @@
+{
+  "validated_on": "2026-10-05",
+  "sdk_base_commit": "19f7ce9",
+  "production_algorithm_changed": false,
+  "delivery": {
+    "type": "DLL and import library",
+    "artifacts": [
+      {
+        "configuration": "Release /MD",
+        "dll": "bin/release/iko_tessellation.dll",
+        "dll_bytes": 10520064,
+        "import_library": "lib/release/iko_tessellation.lib"
+      },
+      {
+        "configuration": "Debug /MDd",
+        "dll": "bin/debug/iko_tessellationd.dll",
+        "dll_bytes": 22299136,
+        "import_library": "lib/debug/iko_tessellationd.lib"
+      }
+    ],
+    "public_exports": [
+      "Tessellate",
+      "ListSurfaces",
+      "WriteObj",
+      "WriteBinaryStl",
+      "StatusName"
+    ],
+    "occt_dll_dependencies": [],
+    "occt_version": "8.0.1",
+    "projection_patch_changed": false
+  },
+  "ctest": {
+    "passed": 5,
+    "total": 5,
+    "tests": [
+      "sdk_contract",
+      "sdk_package",
+      "sdk_dll",
+      "sdk_exact",
+      "sdk_cli"
+    ],
+    "configurations": [
+      "Release /MD",
+      "Debug /MDd"
+    ]
+  },
+  "exact_arithmetic": {
+    "cases": 1007,
+    "operations_per_case": 4,
+    "generated_cases": 1000,
+    "boundary_cases": 7
+  },
+  "cli_checks": 26,
+  "default_multi_face_fixture": "two_planes.igs",
+  "installed_package": {
+    "public_headers_only": true,
+    "custom_install_root_verified": true,
+    "install_root_is_final_prefix": true,
+    "configuration_subdirectories_verified": true,
+    "common_entry_without_default_module_verified": true,
+    "required_optional_components_verified": true,
+    "source_build_rejects_unpatched_occt": true,
+    "caller_occt_required": false,
+    "internal_occt_link_dependencies_exposed": false,
+    "module_configuration_cleanup_verified": true,
+    "recorded_flat_layout_migration_verified": true,
+    "release_debug_coinstall_verified": true,
+    "consumer_configurations_verified": 2,
+    "value_copy_move_reallocation_and_destruction_verified": true,
+    "incompatible_runtime_and_stl_abi_rejected": true
+  },
+  "lucidshape_compatibility": {
+    "configurations": [
+      "Release /MD",
+      "Debug /MDd"
+    ],
+    "evaluations": 952,
+    "core_reference_equal": 798,
+    "file_reference_equal": 146,
+    "entity_reference_equal": 7,
+    "expected_failure_without_reference": 1,
+    "existing_tolerances_and_renumbering_unchanged": true,
+    "references_reexported": false,
+    "output": "../../benchmark/IKOTessellation/.runs/prepush-release/result.json",
+    "debug_output": "../../benchmark/IKOTessellation/.runs/run_20261004T162027Z_9ddd6176/result.json"
+  },
+  "probe_protocol_revision": 1,
+  "standalone_release_runtime_verified": true,
+  "original_geometry_only": true,
+  "lucidshape_reference_dependency": false,
+  "verified_platform": "Windows x64, MSVC 14.51"
+}

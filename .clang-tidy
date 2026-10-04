@@ -1,0 +1,46 @@
+# Google C++ checks for the SDK's own sources. Vendor code is kept upstream.
+# Keep the existing C++17 compatibility and OCCT error boundary.
+Checks: >-
+  -*,
+  google-build-*,
+  google-default-arguments,
+  google-explicit-constructor,
+  google-global-names-in-headers,
+  google-readability-*,
+  google-runtime-*,
+  readability-identifier-naming,
+  readability-isolate-declaration,
+  misc-include-cleaner
+HeaderFilterRegex: '.*[\\/](src|include[\\/]iko)[\\/].*'
+ExcludeHeaderFilterRegex: '.*[\\/]third_party[\\/].*'
+FormatStyle: file
+CheckOptions:
+  readability-braces-around-statements.ShortStatementLines: '0'
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.FunctionCase: CamelCase
+  readability-identifier-naming.FunctionIgnoredRegexp: '^(main|wmain|NewSurface)$'
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.TypeAliasCase: CamelCase
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ValueTemplateParameterCase: lower_case
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionPrefix: IKO_
+  # Google header guards retain a trailing underscore. Windows and Triangle
+  # macros retain the spellings required by their external interfaces.
+  readability-identifier-naming.MacroDefinitionIgnoredRegexp: '^(IKO_.*_H_|NOMINMAX|REAL|VOID|exit|malloc|free|triunsuitable|lucid_auto_stats)$'
+  readability-identifier-naming.EnumConstantCase: CamelCase
+  readability-identifier-naming.EnumConstantPrefix: k
+  readability-identifier-naming.GlobalConstantCase: CamelCase
+  readability-identifier-naming.GlobalConstantPrefix: k
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.StaticConstantPrefix: k
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.PrivateMemberSuffix: '_'
+  readability-identifier-naming.ProtectedMemberCase: lower_case
+  readability-identifier-naming.ProtectedMemberSuffix: '_'
+  # Windows API types and functions are provided through windows.h; MSVC's
+  # runtime implementation headers are provided by the standard C/C++ headers.
+  misc-include-cleaner.IgnoreHeaders: '(^|[/\\])(minwindef|stringapiset|winnls|vcruntime)\.h$'

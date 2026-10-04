@@ -1,0 +1,93 @@
+--- a/src/ModelingData/TKGeomBase/Approx/Approx_ComputeCLine.gxx
++++ b/src/ModelingData/TKGeomBase/Approx/Approx_ComputeCLine.gxx
+@@ -18,6 +18,7 @@
+
+ #include <Approx_ParametrizationType.hxx>
+ #include <AppCont_LeastSquare.hxx>
++#include <ProjLib_ComputeApproxOnPolarSurface.hxx>
+ #include <NCollection_Array1.hxx>
+ #include <AppParCurves_Constraint.hxx>
+ #include <Approx_Status.hxx>
+@@ -284,7 +285,7 @@
+   {
+     for (deg = mydegremax; deg >= mydegremin; deg--)
+     {
+-      NbPoints = std::min(2 * deg + 1, NbPointsMax);
++      NbPoints = Tessellation_ProjectionPolicy::Active ? NbPointsMax : std::min(2 * deg + 1, NbPointsMax);
+       AppCont_LeastSquare LSquare(Line, Ufirst, Ulast, myfirstC, mylastC, deg, NbPoints);
+       mydone = LSquare.IsDone();
+       if (mydone)
+@@ -352,7 +353,7 @@
+   {
+     for (deg = mydegremin; deg <= mydegremax; deg++)
+     {
+-      NbPoints = std::min(2 * deg + 1, NbPointsMax);
++      NbPoints = Tessellation_ProjectionPolicy::Active ? NbPointsMax : std::min(2 * deg + 1, NbPointsMax);
+       AppCont_LeastSquare LSquare(Line, Ufirst, Ulast, myfirstC, mylastC, deg, NbPoints);
+       mydone = LSquare.IsDone();
+       if (mydone)
+--- a/src/ModelingData/TKGeomBase/Extrema/Extrema_GenLocateExtPS.cxx
++++ b/src/ModelingData/TKGeomBase/Extrema/Extrema_GenLocateExtPS.cxx
+@@ -17,6 +17,7 @@
+ #include <Extrema_GenLocateExtPS.hxx>
+
+ #include <Extrema_FuncPSNorm.hxx>
++#include <ProjLib_ComputeApproxOnPolarSurface.hxx>
+ #include <Extrema_FuncPSDist.hxx>
+ #include <Extrema_POnSurf.hxx>
+ #include <gp_Pnt.hxx>
+@@ -180,6 +181,22 @@
+     // Normal projection criteria.
+     Extrema_FuncPSNorm F(theP, mySurf);
+
++    // SDK projection compatibility: retain the original normal-root path.
++    // All other OCCT calls keep the 8.0.1 tolerance/Newton/minimum logic below.
++    if (Tessellation_ProjectionPolicy::Active)
++    {
++      math_FunctionSetRoot aSR(F, aTol);
++      aSR.Perform(F, aStart, aBoundInf, aBoundSup);
++      if (!aSR.IsDone())
++      {
++        return;
++      }
++      mySqDist = F.SquareDistance(1);
++      myPoint = F.Point(1);
++      myDone = true;
++      return;
++    }
++
+     if (mySurf.GetType() == GeomAbs_BSplineSurface)
+     {
+       aTol(1) = myTolU;
+--- a/src/ModelingData/TKGeomBase/ProjLib/ProjLib_ComputeApproxOnPolarSurface.cxx
++++ b/src/ModelingData/TKGeomBase/ProjLib/ProjLib_ComputeApproxOnPolarSurface.cxx
+@@ -2198,6 +2198,12 @@
+
+   Approx_FitAndDivide2d Fit(Deg1, Deg2, Tol3d, Tol2d, true, aFistC, aLastC);
+   Fit.SetMaxSegments(aMaxSegments);
++
++  if (Tessellation_ProjectionPolicy::Active)
++  {
++    Fit.SetInvOrder(false);
++    Fit.SetHangChecking(false);
++  }
+   if (InitCurve2d->GetType() == GeomAbs_Line)
+   {
+     Fit.SetInvOrder(false);
+--- a/src/ModelingData/TKGeomBase/ProjLib/ProjLib_ComputeApproxOnPolarSurface.hxx
++++ b/src/ModelingData/TKGeomBase/ProjLib/ProjLib_ComputeApproxOnPolarSurface.hxx
+@@ -16,6 +16,14 @@
+
+ #ifndef _ProjLib_ComputeApproxOnPolarSurface_HeaderFile
+ #define _ProjLib_ComputeApproxOnPolarSurface_HeaderFile
++
++// Fixed OCCT 8.0.1 SDK compatibility patch, dependencies/IKOOCCTProjection-8.0.1.patch.
++// Disabled by default; the SDK restores this thread-local state on every exit.
++#define OCCT_TESSELLATION_PROJECTION_POLICY 1
++namespace Tessellation_ProjectionPolicy
++{
++inline thread_local bool Active = false;
++}
+
+ #include <Adaptor2d_Curve2d.hxx>
+ #include <Adaptor3d_Surface.hxx>

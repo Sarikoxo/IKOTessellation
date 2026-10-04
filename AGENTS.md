@@ -1,0 +1,10 @@
+# Working rules for SDK modules
+
+- `IKO_INSTALL_ROOT` is the final installation directory. `build.ps1 -InstallRoot` passes it through without appending `iko` or a module name. Modules share the `include`, `lib`, and `bin` directories under this root. Place the current module's DLL and CLI in `bin/<debug|release>`, import libraries in `lib/<debug|release>`, and CMake packages in `lib/cmake`.
+- Maintain the common package entry point in `cmake/iko-config.cmake`. Every module installs the same file to `lib/cmake/iko/iko-config.cmake`. Do not generate different contents per module, hard-code a module list, or load a module by default.
+- Without components, `find_package(iko)` only checks the entry point. With components, look up each `iko_<component>` package. Missing required components must fail; missing optional components may be skipped.
+- Each module owns its package configuration, exported targets, and dependency checks. The common entry point must not handle module-specific dependencies. Public headers may be installed; `private` headers stay in the source tree and internal tests.
+- Build cleanup only handles records owned by the current module and configuration. Remove obsolete installed files only according to the current module's records for that configuration. Preserve files without sufficient ownership records. Never recursively delete the entire installation root, `include`, `lib`, or `bin`.
+- Preserve other modules, configurations, user files, and shared files referenced by other installation records. Always keep the common `iko-config.cmake` when cleaning a single module. Installing export files must not delete exports for other configurations.
+- Keep installation file lists per module and configuration using CMake's existing file records. Do not add hash, audit, or byte-tracing systems.
+- Write the README for users: installation location, directory layout, build steps, and usage. Keep long-term development rules in this file. Code and necessary checks must enforce package lookup, installation, and cleanup behavior.

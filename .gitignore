@@ -1,0 +1,12 @@
+/.runs/
+/build/
+/out/
+/install/
+CMakeUserPresets.json
+.vs/
+*.obj
+*.pdb
+*.exp
+*.lib
+*.dll
+*.exe

@@ -1,0 +1,20 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/iko-tessellation-targets.cmake")
+set_target_properties(iko::tessellation PROPERTIES
+  MAP_IMPORTED_CONFIG_DEBUG Debug MAP_IMPORTED_CONFIG_RELEASE Release
+  MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release MAP_IMPORTED_CONFIG_MINSIZEREL Release)
+# Never substitute another STL/CRT ABI for an absent configuration.
+if(CMAKE_BUILD_TYPE)
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" _iko_config)
+  if(_iko_config STREQUAL "RELWITHDEBINFO" OR _iko_config STREQUAL "MINSIZEREL")
+    set(_iko_config RELEASE)
+  endif()
+  get_target_property(_iko_configs iko::tessellation IMPORTED_CONFIGURATIONS)
+  if(NOT _iko_config IN_LIST _iko_configs)
+    set(iko_tessellation_FOUND FALSE)
+    set(iko_tessellation_NOT_FOUND_MESSAGE "Install the matching ${CMAKE_BUILD_TYPE} iko tessellation DLL; configuration fallback is unsafe for STL value types")
+    return()
+  endif()
+endif()
+check_required_components(iko_tessellation)
