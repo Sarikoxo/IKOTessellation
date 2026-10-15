@@ -747,7 +747,7 @@ int AncestorId(const TopoDS_Face& face,
 }
 }  // namespace
 
-Model ReadOcctRaw(const std::filesystem::path& path) {
+Model ReadOcctRaw(const std::filesystem::path& path, bool topology) {
   std::ifstream in(path, std::ios::binary);
   if (!in) {
     throw std::invalid_argument("Cannot read geometry file");
@@ -882,6 +882,10 @@ Model ReadOcctRaw(const std::filesystem::path& path) {
     model.shell_count = shells.Extent();
     model.solid_count = solids.Extent();
     model.vertex_count = vertices.Extent();
+    for (int i = 1; i <= vertices.Extent(); ++i) {
+      auto p = BRep_Tool::Pnt(TopoDS::Vertex(vertices(i)));
+      model.vertex_positions.push_back({p.X(), p.Y(), p.Z()});
+    }
     auto process = reader.WS()->TransferReader()->TransientProcess();
     std::map<int, std::vector<int>> face_sources;
     for (int entity_index = 1; entity_index <= source->NbEntities();
@@ -1030,6 +1034,21 @@ Model ReadOcctRaw(const std::filesystem::path& path) {
       auto c = BRep_Tool::Curve(e, loc, first, last);
       if (!c.IsNull()) {
         info.curve_type = c->DynamicType()->Name();
+        info.domain = {first, last};
+        auto basis = c;
+        while (auto trimmed = occ::handle<Geom_TrimmedCurve>::DownCast(basis)) {
+          basis = trimmed->BasisCurve();
+        }
+        if (auto spline = occ::handle<Geom_BSplineCurve>::DownCast(basis)) {
+          for (int knot = 1; knot <= spline->NbKnots(); ++knot) {
+            double t = spline->Knot(knot);
+            if (t > first && t < last) info.knots.push_back(t);
+          }
+        }
+        info.point = [c, loc](double t) {
+          auto p = c->Value(t).Transformed(loc.Transformation());
+          return Vec3{p.X(), p.Y(), p.Z()};
+        };
       }
       model.edges.push_back(std::move(info));
     }
@@ -1141,7 +1160,7 @@ Model ReadOcctRaw(const std::filesystem::path& path) {
       face.boundary_edges.emplace_back();
       const auto& actual_edge_ids = convert ? converted_edge_ids : edge_ids;
       face.outer =
-          Wire(outer, f, actual_edge_ids, face.boundary_edges.back(), !convert);
+          Wire(outer, f, actual_edge_ids, face.boundary_edges.back(), !convert && !topology);
       for (TopoDS_Iterator wire_iterator(f); wire_iterator.More();
            wire_iterator.Next()) {
         if (wire_iterator.Value().ShapeType() != TopAbs_WIRE ||
@@ -1151,7 +1170,7 @@ Model ReadOcctRaw(const std::filesystem::path& path) {
         face.boundary_edges.emplace_back();
         face.inner.push_back(Wire(TopoDS::Wire(wire_iterator.Value()), f,
                                   actual_edge_ids, face.boundary_edges.back(),
-                                  !convert));
+                                  !convert && !topology));
       }
       if (convert && original_type == "Geom_Plane") {
         // Retain each conic's analytic envelope and input-derived angular

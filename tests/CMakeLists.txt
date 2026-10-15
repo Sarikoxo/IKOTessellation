@@ -28,6 +28,14 @@ if(IKO_BUILD_PROBE)
 endif()
 
 if(BUILD_TESTING)
+  iko_test_target(tessellation_topology_import topology_import_test.cpp)
+  add_test(NAME sdk_topology_import COMMAND tessellation_topology_import
+    ${CMAKE_CURRENT_SOURCE_DIR}/data)
+  set_tests_properties(sdk_topology_import PROPERTIES TIMEOUT 180)
+  iko_test_target(tessellation_topology topology_test.cpp)
+  target_link_libraries(tessellation_topology PRIVATE iko_tessellation_test_support)
+  add_test(NAME sdk_topology COMMAND tessellation_topology)
+  set_tests_properties(sdk_topology PROPERTIES TIMEOUT 180)
   iko_test_target(tessellation_contract contract_test.cpp)
   target_link_libraries(tessellation_contract PRIVATE iko_tessellation_test_support)
   add_test(NAME sdk_contract COMMAND tessellation_contract

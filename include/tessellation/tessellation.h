@@ -58,6 +58,9 @@ struct Options {
   // Zero generates the complete model. A positive IGES directory entry selects
   // one surface for diagnostics.
   int surface_de = 0;
+  // Opt-in shared topological edge sampling. Default output stays record-exact.
+  // Unsupported/ambiguous topology fails atomically; no automatic sewing.
+  bool topology_consistent = false;
 };
 struct Mesh {
   std::vector<Vec3> xyz;
@@ -71,6 +74,9 @@ struct Mesh {
   std::string identity_mode;
   std::string branch;
   bool explicit_weights = false;
+  // Empty in legacy mode. In topology mode, equal IDs identify one geometric
+  // vertex across separate UV/normal records; IDs are scoped to this mesh.
+  std::vector<std::uint64_t> geometric_vertices;
 };
 struct SurfaceInfo {
   int directory_entry = 0;

@@ -39,6 +39,7 @@ static const char kHelp[] = R"(Usage: tessellate model.igs [options]
   --relative-uv-chord X Relative UV chord tolerance (default 0.01)
   --surface DE          Diagnostic selection by IGES directory entry
   --list                List effective model faces
+  --topology-consistent Coordinate shared OCCT edges (opt-in)
   --no-smooth-poles     Disable the baseline polar-band path
   --steiner-limit N     Insertion budget; 0 uses automatic protection
   --out PATH            Optional .obj or binary .stl export
@@ -60,6 +61,10 @@ static int Run(int argc, char** argv) {
       }
       if (key == "--list" || key == "--list-surfaces") {
         list = true;
+        continue;
+      }
+      if (key == "--topology-consistent") {
+        o.topology_consistent = true;
         continue;
       }
       if (key == "--no-smooth-poles") {

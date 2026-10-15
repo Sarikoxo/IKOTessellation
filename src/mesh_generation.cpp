@@ -70,6 +70,9 @@ void Append(Mesh& dest, Mesh source) {
   dest.uv.insert(dest.uv.end(), source.uv.begin(), source.uv.end());
   dest.normals.insert(dest.normals.end(), source.normals.begin(),
                       source.normals.end());
+  dest.geometric_vertices.insert(dest.geometric_vertices.end(),
+                                 source.geometric_vertices.begin(),
+                                 source.geometric_vertices.end());
   dest.identities.insert(dest.identities.end(), source.identities.begin(),
                          source.identities.end());
   dest.unpaired_uv_tail.insert(dest.unpaired_uv_tail.end(),

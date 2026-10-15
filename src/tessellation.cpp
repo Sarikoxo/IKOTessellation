@@ -47,7 +47,8 @@ Result Tessellate(const std::filesystem::path& file, const Options& o) {
   std::string current_face;
   try {
     r.effective_options = internal::Effective(o);
-    auto model = internal::ReadOcct(file);
+    auto model = o.topology_consistent ? internal::ReadOcctRaw(file, true)
+                                       : internal::ReadOcct(file);
     r.repair_trace = model.repair_trace;
     if (model.faces.empty()) {
       throw internal::Unsupported("OCCT model contains no effective faces");
@@ -85,9 +86,16 @@ Result Tessellate(const std::filesystem::path& file, const Options& o) {
     // Publish atomically: any required-face failure leaves no partial mesh.
     Mesh complete;
     std::vector<FaceRange> ranges;
+    std::vector<Mesh> topology_parts;
+    if (o.topology_consistent) {
+      topology_parts = internal::GenerateTopology(model, selected, r.effective_options);
+    }
+    std::size_t face_index = 0;
     for (const auto* face : selected) {
       current_face = face->id;
-      auto part = internal::Generate(*face, r.effective_options);
+      auto part = o.topology_consistent
+                      ? std::move(topology_parts.at(face_index++))
+                      : internal::Generate(*face, r.effective_options);
       // LucidShape getMeshSurface exports the support's parametric orientation.
       // Keep the OCCT topological use direction in FaceRange, without editing
       // the exported triangle/normal records (verified on reversed BRep faces).

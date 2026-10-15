@@ -34,7 +34,7 @@ option(IKO_BUILD_PROBE "Build the machine-readable SDK test executable" ${BUILD_
 
 add_library(iko_tessellation_core OBJECT
   src/geometry.cpp src/parameterization.cpp src/mesh_generation.cpp
-  src/content_hash.cpp src/options.cpp
+  src/content_hash.cpp src/options.cpp src/topology.cpp
   src/triangle.cpp src/trim.cpp src/pole.cpp src/trim_import.cpp
   src/bezier.cpp src/intersections.cpp src/repair.cpp
   src/combined_repair.cpp src/periodic_surface.cpp

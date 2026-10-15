@@ -153,6 +153,11 @@ struct ImportedEdge {
   bool seam = false;
   double tolerance = 0.;
   std::string curve_type;
+  std::array<double, 2> domain{};
+  // XYZ curve knot breaks, in the same parameter range.
+  std::vector<double> knots;
+  // World-space, forward topological edge parameterization.
+  std::function<Vec3(double)> point;
 };
 struct ImportCoverage {
   int source_de = 0;
@@ -163,6 +168,8 @@ struct Model {
   std::vector<Face> faces;
   std::vector<std::string> repair_trace;
   std::vector<ImportedEdge> edges;
+  // OCCT vertex ID minus one indexes a canonical world-space position.
+  std::vector<Vec3> vertex_positions;
   std::vector<ImportCoverage> roots;
   int shell_count = 0;
   int solid_count = 0;
@@ -175,7 +182,8 @@ struct Model {
 // OCCT import and shape healing, then adaptation; no legacy file repair or
 // fallback.
 Model ReadOcct(const std::filesystem::path& path);
-Model ReadOcctRaw(const std::filesystem::path& path);  // diagnostics only
+Model ReadOcctRaw(const std::filesystem::path& path,
+                  bool topology = false);  // explicit unadapted edge uses
 void AdaptOcctFace(Face& face, std::vector<std::string>& trace);
 void JoinOcctConversionEndpoints(std::vector<Curve>& curves,
                                  std::vector<int>& edge_ids,
@@ -237,6 +245,9 @@ bool PrepareLoop(std::vector<Vec2>& loop);
 bool Refine(const Surface& s, const Options& options,
             const std::array<Vec2, 3>& uv);
 Mesh Generate(const Face& face, const Options& effective_options);
+std::vector<Mesh> GenerateTopology(
+    const Model& model, const std::vector<const Face*>& selected,
+    const Options& options);
 Mesh BuildTrim(const Face& face, const Options& options);
 Mesh BuildPole(const Face& face, const Options& options, int pole);
 struct PoleAxes {

@@ -82,3 +82,50 @@ Release and Debug can share an installation directory. CMake selects the files f
 Only public headers are installed. Reinstalling removes obsolete files recorded for the current module and configuration while preserving other modules, configurations, user files, and shared files still in use. `-Clean` only cleans build artifacts for the current configuration.
 
 See the [test guide](tests/README.md) for tests and C++ interface requirements, and the [validation record](tests/validation.json) for verified results. Third-party materials are listed in the [license notices](THIRD_PARTY_NOTICES.md) and [OCCT patch](dependencies/occt_projection-8.0.1.patch).
+
+## Topology-consistent meshing (opt-in)
+
+The default remains record-exact: faces are sampled independently and vertex
+records are never welded. To coordinate an imported BRep's shared edges:
+
+```cpp
+iko::Options options;
+options.topology_consistent = true;
+auto result = iko::Tessellate("model.igs", options);
+```
+
+The CLI equivalent is `tessellate model.igs --topology-consistent --out model.obj`.
+This mode builds one ordered XYZ sample registry per OCCT topological edge,
+unions sampling and surface-knot requests from the selected incident faces,
+and maps the resulting samples onto each directed pcurve independently. Shared
+edge endpoints use the canonical OCCT vertex position. It retains explicit
+wires, including natural rectangles, instead of using the legacy trim cleanup.
+The triangulator cannot independently insert boundary vertices; boundary
+segments are checked before any result is published. If a fixed boundary blocks
+Triangle's circumcenter insertion, bounded interior-centroid refinement retries
+the same constraints while retaining all previous vertices. Automatic mode caps
+insertions at 100,000 per face; an explicit `steiner_limit` covers all backend and
+manual interior insertions.
+
+UVs, normals, and triangle indices remain face-local records. In this mode,
+`mesh.geometric_vertices` supplies one ID per vertex record: equal IDs represent
+the same geometric vertex, including copies on adjacent faces, seam occurrences,
+and surface-knot normal discontinuities. IDs are scoped to that result and are
+not stable across calls/options. OBJ/STL exports still preserve separate records;
+applications needing geometric connectivity can use these IDs without merging
+UVs or sharp normals. Topology-mode coordinates retain double precision.
+
+Only existing OCCT edge/vertex identities are shared. Coincident independent
+surfaces are not automatically sewn. A diagnostic `surface_de` selection
+coordinates only the selected faces. The support's parametric normal and winding
+convention is unchanged; `FaceRange.surface.reversed` remains separate metadata.
+
+This is a conservative, opt-in implementation. Degenerate pole edges, missing or
+synthetic topology, ambiguous/nonmonotone XYZ-to-pcurve mappings, disconnected
+wires, unresolved knot constraints, and singular normals return an explicit
+failure with no partial mesh. Valid repeated seam uses retain their distinct UV
+occurrences. Sampling is adaptive and numerical, using the existing tolerance
+and minimum-edge heuristics plus finite mapping probes; it is not a proof of a
+strict global chord-error bound. Fixed boundaries can prevent requested interior
+refinement; exhaustion is reported rather than silently returning an incomplete
+refinement. Rebuild SDK consumers when updating these public value-type layouts.
